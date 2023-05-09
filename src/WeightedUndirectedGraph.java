@@ -129,10 +129,14 @@ public class WeightedUndirectedGraph {
     }
 
     public boolean cycleDetection(){
-        Set<Node> sharedNodeSet = new HashSet<>();
+        Set<Node> remainingSet = new HashSet<>();
+        Set<Node> visitingSet = new HashSet<>();
+        Set<Node> visitedSet = new HashSet<>();
 
-        for (var node : adjacencyMap.keySet()) {
-            if (cycleDetection(null, node, sharedNodeSet, new HashSet<>()))
+        remainingSet.addAll(nodeMap.values());
+
+        while (!remainingSet.isEmpty()){
+            if (cycleDetection(null, remainingSet.iterator().next(), remainingSet, visitingSet, visitedSet))
                 return true;
         }
 
@@ -262,12 +266,10 @@ public class WeightedUndirectedGraph {
         return minimumSpanningTree;
     }
 
-    private boolean cycleDetection(Edge edgeForTwoWayDirection, Node currentNode, Set<Node> sharedNodeSet, Set<Node> privateNodeSet){
-        if (!privateNodeSet.add(currentNode))
-            return true;
-
-        if (!sharedNodeSet.add(currentNode))
-            return false;
+    private boolean cycleDetection(Edge edgeForTwoWayDirection, Node currentNode, Set<Node> remainingSet,
+                                   Set<Node> visitingSet, Set<Node> visitedSet){
+        remainingSet.remove(currentNode);
+        visitingSet.add(currentNode);
 
         for (var edge : adjacencyMap.get(currentNode)) {
             if (!(edgeForTwoWayDirection == null)){
@@ -275,9 +277,18 @@ public class WeightedUndirectedGraph {
                     continue;
             }
 
-            if (cycleDetection(edge, edge.toNode, sharedNodeSet, privateNodeSet))
+            if (visitedSet.contains(edge.toNode))
+                continue;
+
+            if (visitingSet.contains(edge.toNode))
+                return true;
+
+            if (cycleDetection(edge, edge.toNode, remainingSet, visitingSet, visitedSet))
                 return true;
         }
+
+        visitingSet.remove(currentNode);
+        visitedSet.add(currentNode);
 
         return false;
     }
